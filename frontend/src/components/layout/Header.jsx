@@ -14,20 +14,6 @@ export default function Header() {
             <div className="header__subtitle">Trip Planner & ELD Log Generator</div>
           </div>
         </div>
-
-        <nav className="header__nav">
-          <a href="#trip-form" className="header__link header__link--active">
-            Trip Planner
-          </a>
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="header__link"
-          >
-            GitHub ↗
-          </a>
-        </nav>
       </div>
     </header>
   );

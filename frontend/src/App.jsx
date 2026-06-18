@@ -125,6 +125,9 @@ export default function App() {
                                   pickupLocation: tripResult.pickup_location,
                                   dropoffLocation: tripResult.dropoff_location,
                                   totalDistance: tripResult.total_distance,
+                                  fromLocation: tripResult.pickup_location || tripResult.current_location,
+                                  toLocation: tripResult.dropoff_location,
+                                  totalMileage: tripResult.total_distance ? Math.round(tripResult.total_distance) : '',
                                 }}
                               />
                             ))}

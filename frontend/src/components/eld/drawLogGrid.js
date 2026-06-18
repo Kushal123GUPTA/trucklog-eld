@@ -43,10 +43,11 @@ const HW = GW / 24;            // 1-hour column width
 const S = {};
 S.hdrT = FY;         S.hdrH = 38;
 S.dateT = FY + 38;   S.dateH = 50;
-S.carT = FY + 88;    S.carH = 42;
-S.adrT = FY + 130;   S.adrH = 30;
-S.ghT  = FY + 160;   S.ghH  = 20;   // grid hour labels top
-S.grT  = FY + 180;   S.rowH = 46;   // grid top, row height
+S.fromToT = FY + 88; S.fromToH = 30;
+S.carT = FY + 118;   S.carH = 42;
+S.adrT = FY + 160;   S.adrH = 30;
+S.ghT  = FY + 190;   S.ghH  = 20;   // grid hour labels top
+S.grT  = FY + 210;   S.rowH = 46;   // grid top, row height
 S.grH  = S.rowH * 4;                 // grid total height
 S.grB  = S.grT + S.grH;              // grid bottom
 S.gbT  = S.grB;      S.gbH  = 20;   // grid hour labels bottom
@@ -75,6 +76,7 @@ export default function drawLogGrid(canvas, logData, tripInfo = {}, options = {}
   drawFormBorder(ctx);
   drawHeaderBanner(ctx);
   drawDateMilesVehicle(ctx, logData, tripInfo, options);
+  drawFromTo(ctx, logData, tripInfo, options);
   drawCarrierSignature(ctx, logData, tripInfo, options);
   drawAddressCoDriver(ctx, tripInfo, options);
   drawHourLabels(ctx, S.ghT + S.ghH - 4);    // top labels
@@ -130,11 +132,13 @@ function drawDateMilesVehicle(ctx, log, trip, options) {
   const b = y + S.dateH;
   hLine(ctx, FX, FR, b);
 
-  // Divide into 3 columns
-  const c1 = FX + FW * 0.36;
-  const c2 = FX + FW * 0.58;
+  // Divide into 4 columns
+  const c1 = FX + FW * 0.30;
+  const c2 = FX + FW * 0.45;
+  const c3 = FX + FW * 0.60;
   vLine(ctx, c1, y, b);
   vLine(ctx, c2, y, b);
+  vLine(ctx, c3, y, b);
 
   if (!options.isBlank) {
     // Parse date
@@ -159,21 +163,75 @@ function drawDateMilesVehicle(ctx, log, trip, options) {
     ctx.fillStyle = C.dark;
     ctx.fillText(`${miles}`, (c1 + c2) / 2, y + 26);
   }
+  ctx.textAlign = 'center';
   ctx.font = '8px "Times New Roman", serif';
   ctx.fillStyle = C.gray;
-  ctx.fillText('(TOTAL MILES DRIVING TODAY)', (c1 + c2) / 2, y + 40);
+  ctx.fillText('(TOTAL MILES DRIVING)', (c1 + c2) / 2, y + 40);
 
   if (!options.isBlank) {
-    // -- Column 3: Vehicle Numbers
+    // -- Column 3: Total Mileage Today
+    const totalMileage = trip.totalMileage || '';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 18px "Times New Roman", serif';
+    ctx.fillStyle = C.dark;
+    ctx.fillText(`${totalMileage}`, (c2 + c3) / 2, y + 26);
+  }
+  ctx.textAlign = 'center';
+  ctx.font = '8px "Times New Roman", serif';
+  ctx.fillStyle = C.gray;
+  ctx.fillText('(TOTAL MILEAGE TODAY)', (c2 + c3) / 2, y + 40);
+
+  if (!options.isBlank) {
+    // -- Column 4: Vehicle Numbers
     const vehicleNums = trip.vehicleNumbers || 'TL-1024, TR-5587';
     ctx.textAlign = 'center';
     ctx.font = 'bold 14px "Times New Roman", serif';
     ctx.fillStyle = C.dark;
-    ctx.fillText(vehicleNums, (c2 + FR) / 2, y + 22);
+    ctx.fillText(vehicleNums, (c3 + FR) / 2, y + 22);
   }
+  ctx.textAlign = 'center';
   ctx.font = '8px "Times New Roman", serif';
   ctx.fillStyle = C.gray;
-  ctx.fillText('VEHICLE NUMBERS—(SHOW EACH UNIT)', (c2 + FR) / 2, y + 40);
+  ctx.fillText('VEHICLE NUMBERS—(SHOW EACH UNIT)', (c3 + FR) / 2, y + 40);
+}
+
+// ── 2.5. From and To Locations ──────────────────────────────────
+function drawFromTo(ctx, log, trip, options) {
+  const y = S.fromToT;
+  const b = y + S.fromToH;
+  hLine(ctx, FX, FR, b);
+
+  // Divide into 2 columns
+  const c1 = FX + FW * 0.50;
+  vLine(ctx, c1, y, b);
+
+  // -- Left: From
+  const fromLocation = trip.fromLocation || '';
+  if (!options.isBlank) {
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 14px "Times New Roman", serif';
+    ctx.fillStyle = C.dark;
+    ctx.fillText(fromLocation, FX + 14, y + 16);
+  }
+  hLine(ctx, FX + 10, c1 - 10, y + 19, 0.5);
+  ctx.textAlign = 'left';
+  ctx.font = '8px "Times New Roman", serif';
+  ctx.fillStyle = C.gray;
+  ctx.fillText('(FROM / STARTING POINT)', FX + 14, y + 28);
+
+  // -- Right: To
+  const toLocation = trip.toLocation || '';
+  if (!options.isBlank) {
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 14px "Times New Roman", serif';
+    ctx.fillStyle = C.dark;
+    ctx.fillText(toLocation, c1 + 14, y + 16);
+  }
+  hLine(ctx, c1 + 10, FR - 10, y + 19, 0.5);
+  ctx.textAlign = 'left';
+  ctx.font = '8px "Times New Roman", serif';
+  ctx.fillStyle = C.gray;
+  ctx.fillText('(TO / DESTINATION)', c1 + 14, y + 28);
 }
 
 
