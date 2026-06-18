@@ -1,186 +1,90 @@
 # 🚛 TruckLog ELD — Trip Planner & Electronic Logging Device
 
-A full-stack application that takes trip details as inputs and generates FMCSA-compliant route instructions with ELD daily log sheets.
+## 📖 Project Overview
+TruckLog ELD is a comprehensive full-stack application designed specifically for the trucking industry. It takes trip details—including the driver's current location, pickup point, drop-off destination, and available cycle hours—and intelligently generates FMCSA-compliant route instructions along with beautifully rendered Electronic Logging Device (ELD) daily log sheets. 
 
-## 🎯 Features
+It simulates a real driver's journey, taking into account distance, speed, and mandatory rest periods to output a fully compliant, step-by-step itinerary and the corresponding visual log sheets.
 
-- **Trip Planning** — Enter current location, pickup, dropoff & cycle hours
-- **Route Mapping** — Interactive map showing route with all stops (fuel, rest, breaks)
-- **ELD Log Sheets** — Auto-generated, FMCSA-compliant daily driver log sheets (drawn on canvas)
-- **HOS Compliance** — Full Hours of Service rules engine (property-carrying, 70hr/8day)
+## 🎯 How It Is Useful to Truckers
+Truck drivers face strict regulations under the Federal Motor Carrier Safety Administration (FMCSA) Hours of Service (HOS) rules. Violations can lead to heavy fines, out-of-service orders, or even losing their Commercial Driver's License (CDL). TruckLog ELD solves these challenges by providing:
+
+1. **Automated HOS Compliance**: The application automatically calculates the complex 70-hour/8-day property-carrying rules. It knows exactly when a driver must take a 30-minute break (after 8 hours of driving), when they hit their 11-hour daily driving limit, and when the 14-hour on-duty window closes.
+2. **Precision Trip Planning**: Drivers no longer need to guess where they should stop for fuel or rest. The app maps out the exact route and strategically places 30-minute fuel/rest breaks, 10-hour off-duty sleeps, and 34-hour cycle restarts.
+3. **Interactive ELD Log Sheets**: Maintaining paper logs is tedious and prone to human error. TruckLog automatically draws accurate visual log sheets on a standardized 24-hour grid, marking exactly when the driver was "Off Duty," in the "Sleeper Berth," "Driving," or "On Duty (Not Driving)."
+4. **Visual Route Mapping**: An interactive map visualizes the entire journey, plotting all the necessary stops, making it incredibly easy for drivers to visualize their day-to-day progress.
+5. **Pre/Post-Trip Built-in**: It automatically factors in the required 15-minute pre-trip and post-trip inspections, ensuring no required duty status changes are missed.
 
 ## 🏗️ Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 18 + Vite |
-| Styling | Vanilla CSS (custom design system) |
-| Map | Leaflet + React-Leaflet |
-| ELD Drawing | HTML5 Canvas |
-| Backend | Django 5 + Django REST Framework |
-| Routing API | OpenRouteService (free tier) |
-| Database | SQLite (dev) / PostgreSQL (prod) |
-| Deploy (FE) | Vercel |
-| Deploy (BE) | Render |
-
-## 📁 Project Structure
-
-```
-Truck Log App/
-├── README.md
-├── backend/                        # Django REST API
-│   ├── manage.py
-│   ├── requirements.txt
-│   ├── Procfile
-│   ├── .env.example
-│   ├── config/                     # Django project configuration
-│   │   ├── settings/
-│   │   │   ├── base.py             # Shared settings
-│   │   │   ├── development.py      # Dev overrides
-│   │   │   └── production.py       # Prod overrides
-│   │   ├── urls.py
-│   │   ├── wsgi.py
-│   │   └── asgi.py
-│   └── trips/                      # Main Django app
-│       ├── models.py               # Trip, TripStop, DailyLog, DutyStatusEntry
-│       ├── serializers.py          # DRF serializers
-│       ├── views.py                # API views
-│       ├── urls.py                 # App URL routing
-│       ├── admin.py                # Admin panel config
-│       └── services/               # Business logic layer
-│           ├── routing.py          # OpenRouteService directions
-│           ├── geocoding.py        # Address → coordinates
-│           └── hos_engine.py       # HOS rules engine & trip planner
-│
-└── frontend/                       # React + Vite SPA
-    ├── index.html
-    ├── vite.config.js
-    ├── package.json
-    └── src/
-        ├── main.jsx
-        ├── App.jsx
-        ├── index.css               # Design system & global styles
-        ├── api/                    # API client layer
-        │   └── tripApi.js
-        ├── components/
-        │   ├── layout/             # App shell components
-        │   │   ├── Header.jsx
-        │   │   └── Footer.jsx
-        │   ├── trip/               # Trip input & results
-        │   │   ├── TripForm.jsx
-        │   │   ├── TripSummary.jsx
-        │   │   └── StopTimeline.jsx
-        │   ├── map/                # Map visualization
-        │   │   └── RouteMap.jsx
-        │   └── eld/                # ELD log sheet rendering
-        │       ├── DailyLogSheet.jsx
-        │       └── LogSheetGrid.jsx
-        ├── hooks/                  # Custom React hooks
-        │   └── useTrip.js
-        └── utils/                  # Shared utilities
-            └── constants.js
-```
-
----
-
-## 📋 Implementation Plan
-
-### FMCSA HOS Rules (Property-Carrying Driver, 70hr/8day)
-
-| Rule | Limit | Description |
-|------|-------|-------------|
-| 11-Hour Driving | 11 hrs max | Max driving after 10 consecutive hrs off duty |
-| 14-Hour Window | 14 hrs | Cannot drive beyond 14th hour after coming on duty |
-| 30-Minute Break | After 8 hrs driving | Must take 30-min break after 8 cumulative hrs of driving |
-| 10-Hour Off-Duty | 10 hrs | Required rest between duty periods |
-| 70-Hour/8-Day | 70 hrs cumulative | Cannot drive after 70 hrs on-duty in rolling 8 days |
-| 34-Hour Restart | 34 hrs | Optional full reset of 70-hour clock |
-
-### Assumptions
-- Property-carrying driver
-- 70-hour/8-day cycle
-- No adverse driving conditions
-- Fueling at least once every 1,000 miles
-- 1 hour for pickup and drop-off (on-duty not driving)
-- Average truck speed: 55 mph
-- Pre-trip inspection: 15 minutes
-- Post-trip inspection: 15 minutes
-- Fuel stop duration: 30 minutes
-
-### Core Algorithm Flow
-
-```
-1. Geocode all locations → coordinates
-2. Get route: current → pickup → dropoff (via OpenRouteService HGV profile)
-3. Simulate driver journey:
-   a. Start day → pre-trip inspection (15 min on-duty)
-   b. Drive until a constraint is hit:
-      - 8 hrs driving → 30-min break
-      - 11 hrs driving → must stop
-      - 14 hrs on-duty window → must stop
-      - 1,000 miles → fuel stop (30 min)
-      - 70-hr cycle limit → 34-hr restart
-   c. At end of driving day → post-trip (15 min), then 10-hr off-duty
-   d. Repeat until destination reached
-4. At pickup: 1 hr on-duty not driving
-5. At dropoff: 1 hr on-duty not driving
-6. Generate daily log entries from simulation
-7. Render log sheets on canvas
-```
-
-### ELD Daily Log Sheet Grid
-
-```
-4 duty status rows × 24 hour columns (with 15-min subdivisions):
-Row 1: Off Duty
-Row 2: Sleeper Berth
-Row 3: Driving
-Row 4: On Duty (Not Driving)
-
-Drawing: horizontal lines in active row, vertical lines for status transitions
-```
-
-### Execution Phases
-
-- **Phase 1**: Project setup, folder structure, Django models, React scaffold, design system
-- **Phase 2**: HOS engine, trip planning algorithm, API endpoints
-- **Phase 3**: Frontend — trip form, map integration, route display
-- **Phase 4**: ELD log sheet canvas rendering, PDF export
-- **Phase 5**: Polish, animations, responsive design, deployment
-
----
+| **Frontend** | React 18 + Vite |
+| **Styling** | Vanilla CSS (Custom modern design system) |
+| **Map** | Leaflet + React-Leaflet |
+| **ELD Drawing** | HTML5 Canvas |
+| **Backend** | Django 5 + Django REST Framework |
+| **Routing API** | OpenRouteService (HGV profile) |
+| **Database** | SQLite (Dev) / PostgreSQL (Prod) |
+| **Deploy (FE)** | Vercel |
+| **Deploy (BE)** | Render |
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- Python 3.11+
-- Node.js 18+
-- OpenRouteService API key (free at https://openrouteservice.org)
+Follow these commands to get the project up and running on your local machine.
 
-### Backend Setup
+### Prerequisites
+- **Python 3.11+**
+- **Node.js 18+**
+- An **OpenRouteService API key** (You can get a free one at [openrouteservice.org](https://openrouteservice.org))
+
+### 1. Backend Setup
+
+Open a terminal and navigate to the backend directory:
 ```bash
 cd backend
+
+# Create a virtual environment
 python -m venv venv
-venv\Scripts\activate        # Windows
+
+# Activate the virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install the Python dependencies
 pip install -r requirements.txt
+
+# Run database migrations
 python manage.py migrate
+
+# Start the Django development server
 python manage.py runserver
 ```
 
-### Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev
-```
+### 2. Environment Variables
 
-### Environment Variables
-Copy `.env.example` to `.env` and fill in:
+In the `backend` folder, copy the `.env.example` to `.env` and fill in your details:
 ```
 ORS_API_KEY=your_openrouteservice_api_key
 SECRET_KEY=your_django_secret_key
 DEBUG=True
 ```
+
+### 3. Frontend Setup
+
+Open a new terminal window and navigate to the frontend directory:
+```bash
+cd frontend
+
+# Install Node.js dependencies
+npm install
+
+# Start the Vite development server
+npm run dev
+```
+
+Your backend API will be running on `http://localhost:8000` and your frontend application will be accessible at `http://localhost:5173` (or the port specified by Vite).
 
 ---
 
