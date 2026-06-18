@@ -1016,7 +1016,9 @@ input, button, textarea, select {
   }
 
   .app-sidebar {
+    position: static;
     max-height: none;
+    overflow: visible;
   }
 
   .map-container {
@@ -1030,7 +1032,7 @@ input, button, textarea, select {
   }
 
   .stats-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr; /* Stack stats on very small screens */
   }
 
   .header__subtitle {
@@ -1039,6 +1041,15 @@ input, button, textarea, select {
 
   .map-container {
     height: 300px;
+  }
+  
+  .tabs-header {
+    flex-direction: column;
+  }
+  
+  .tab-btn {
+    width: 100%;
+    margin-left: 0 !important;
   }
 }
 

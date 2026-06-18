@@ -17,7 +17,7 @@ import RouteMap from './components/map/RouteMap';
 import DailyLogSheet from './components/eld/DailyLogSheet';
 import drawLogGrid from './components/eld/drawLogGrid';
 import { useTrip } from './hooks/useTrip';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function App() {
   const {
@@ -31,6 +31,14 @@ export default function App() {
   } = useTrip();
 
   const [activeTab, setActiveTab] = useState('map'); // 'map' or 'eld'
+  const [currentLogPage, setCurrentLogPage] = useState(1);
+
+  // Reset log page when trip changes
+  useEffect(() => {
+    if (tripResult) {
+      setCurrentLogPage(1);
+    }
+  }, [tripResult]);
 
   const hasTrip = tripResult && tripResult.stops;
 
@@ -115,23 +123,44 @@ export default function App() {
                       {tripResult?.daily_logs && tripResult.daily_logs.length > 0 ? (
                         <div className="eld-section" id="eld-logs" style={{ padding: '0', marginTop: 'var(--space-4)' }}>
                           <div className="eld-logs-grid">
-                            {tripResult.daily_logs.map((log) => (
-                              <DailyLogSheet
-                                key={log.id}
-                                logData={log}
-                                dayNumber={log.day_number}
-                                tripInfo={{
-                                  currentLocation: tripResult.current_location,
-                                  pickupLocation: tripResult.pickup_location,
-                                  dropoffLocation: tripResult.dropoff_location,
-                                  totalDistance: tripResult.total_distance,
-                                  fromLocation: tripResult.pickup_location || tripResult.current_location,
-                                  toLocation: tripResult.dropoff_location,
-                                  totalMileage: tripResult.total_distance ? Math.round(tripResult.total_distance) : '',
-                                }}
-                              />
-                            ))}
+                            <DailyLogSheet
+                              key={tripResult.daily_logs[currentLogPage - 1].id}
+                              logData={tripResult.daily_logs[currentLogPage - 1]}
+                              dayNumber={tripResult.daily_logs[currentLogPage - 1].day_number}
+                              tripInfo={{
+                                currentLocation: tripResult.current_location,
+                                pickupLocation: tripResult.pickup_location,
+                                dropoffLocation: tripResult.dropoff_location,
+                                totalDistance: tripResult.total_distance,
+                                fromLocation: tripResult.pickup_location || tripResult.current_location,
+                                toLocation: tripResult.dropoff_location,
+                                totalMileage: tripResult.total_distance ? Math.round(tripResult.total_distance) : '',
+                              }}
+                            />
                           </div>
+
+                          {/* Pagination Controls */}
+                          {tripResult.daily_logs.length > 1 && (
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '1.5rem', background: 'var(--color-bg-glass)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }}>
+                              <button 
+                                className={`btn btn--secondary ${currentLogPage === 1 ? 'btn--disabled' : ''}`}
+                                disabled={currentLogPage === 1}
+                                onClick={() => setCurrentLogPage(prev => Math.max(1, prev - 1))}
+                              >
+                                ← Previous Day
+                              </button>
+                              <span style={{ fontWeight: '600', color: 'var(--color-text-primary)' }}>
+                                Day {currentLogPage} of {tripResult.daily_logs.length}
+                              </span>
+                              <button 
+                                className={`btn btn--secondary ${currentLogPage === tripResult.daily_logs.length ? 'btn--disabled' : ''}`}
+                                disabled={currentLogPage === tripResult.daily_logs.length}
+                                onClick={() => setCurrentLogPage(prev => Math.min(tripResult.daily_logs.length, prev + 1))}
+                              >
+                                Next Day →
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="card" style={{ minHeight: '300px' }}>
