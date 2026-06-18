@@ -18,6 +18,7 @@ import DailyLogSheet from './components/eld/DailyLogSheet';
 import drawLogGrid from './components/eld/drawLogGrid';
 import { useTrip } from './hooks/useTrip';
 import { useState, useEffect } from 'react';
+import { wakeupBackend } from './api/tripApi';
 
 export default function App() {
   const {
@@ -32,6 +33,11 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState('map'); // 'map' or 'eld'
   const [currentLogPage, setCurrentLogPage] = useState(1);
+
+  // Wake up backend on initial load (prevents cold start delay)
+  useEffect(() => {
+    wakeupBackend();
+  }, []);
 
   // Reset log page when trip changes
   useEffect(() => {

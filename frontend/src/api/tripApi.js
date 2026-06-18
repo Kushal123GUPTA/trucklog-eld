@@ -55,4 +55,16 @@ export const geocodeLocation = async (query) => {
   return response.data;
 };
 
+/**
+ * Ping the backend to wake it up from a cold start (e.g. Render free tier sleep).
+ * We hit /trips/ because it's a lightweight list endpoint that returns 200 OK.
+ */
+export const wakeupBackend = async () => {
+  try {
+    await apiClient.get('/trips/');
+  } catch (error) {
+    console.log("Wakeup ping error (expected if sleepy):", error);
+  }
+};
+
 export default apiClient;
